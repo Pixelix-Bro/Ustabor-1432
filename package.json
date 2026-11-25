@@ -1,0 +1,36 @@
+{
+  "name": "ustabor-1432",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "models:optimize": "node scripts/optimize-models.mjs"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.117.3",
+    "@react-three/fiber": "^8.17.10",
+    "gsap": "^3.12.5",
+    "lenis": "^1.1.18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.1.1",
+    "@gltf-transform/core": "^4.1.1",
+    "@gltf-transform/extensions": "^4.1.1",
+    "@gltf-transform/functions": "^4.1.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.170.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "meshoptimizer": "^0.22.0",
+    "sharp": "^0.33.5",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}
