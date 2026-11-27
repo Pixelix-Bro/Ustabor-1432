@@ -1,19 +1,22 @@
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { Preload } from '@react-three/drei';
-import { NoToneMapping, SRGBColorSpace } from 'three';
-import { CAMERA, SCENES } from '@/data/scenes';
-import { progress } from '@/store/progress';
-import { isLowPowerDevice } from '@/utils/webgl';
-import { Craftsman } from './Craftsman';
-import { Lighting } from './Lighting';
-import { CameraRig } from './CameraRig';
+import { CAMERA, SCENES } from '@/data/scenes'
+import { progress } from '@/store/progress'
+import { isLowPowerDevice } from '@/utils/webgl'
+import { Preload } from '@react-three/drei'
+import { Canvas } from '@react-three/fiber'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { NoToneMapping, SRGBColorSpace } from 'three'
+import { CameraRig } from './CameraRig'
+import { Craftsman } from './Craftsman'
+import { Lighting } from './Lighting'
+import { preloadModel } from './useNormalizedModel'
+
+const MODEL_SCENES = SCENES.map((s, i) => ({ s, i })).filter(({ s }) => s.model)
 
 interface ExperienceProps {
-  isMobile: boolean;
-  isTablet: boolean;
-  reducedMotion: boolean;
-  onHeroReady: () => void;
+  isMobile: boolean
+  isTablet: boolean
+  reducedMotion: boolean
+  onHeroReady: () => void
 }
 
 /**
@@ -21,40 +24,43 @@ interface ExperienceProps {
  * remaining models in order so each profession is ready before it is reached.
  */
 export function Experience({ isMobile, isTablet, reducedMotion, onHeroReady }: ExperienceProps) {
-  const lowPower = useMemo(() => isLowPowerDevice() || isMobile, [isMobile]);
-  const [heroReady, setHeroReady] = useState(false);
-  const [loadedCount, setLoadedCount] = useState(0);
+  const lowPower = useMemo(() => isLowPowerDevice() || isMobile, [isMobile])
+  const [heroReady, setHeroReady] = useState(false)
+  const [loadedCount, setLoadedCount] = useState(0)
 
   const handleHeroReady = useCallback(() => {
     if (!heroReady) {
-      setHeroReady(true);
-      onHeroReady();
+      setHeroReady(true)
+      onHeroReady()
     }
-  }, [heroReady, onHeroReady]);
+  }, [heroReady, onHeroReady])
+
+  useEffect(() => {
+    if (!heroReady) return
+    MODEL_SCENES.slice(1).forEach(({ s }) => preloadModel(s.model!))
+  }, [heroReady])
 
   // Progressive loading: each model is mounted (and therefore fetched) only
   // after the previous one has rendered, so the first paint stays fast and
   // the professions are ready before the visitor scrolls to them.
   const handleModelReady = useCallback(
     (order: number) => {
-      if (order === 0) handleHeroReady();
-      setLoadedCount((c) => Math.max(c, order + 1));
+      if (order === 0) handleHeroReady()
+      setLoadedCount((c) => Math.max(c, order + 1))
     },
-    [handleHeroReady],
-  );
+    [handleHeroReady]
+  )
 
   // Pointer parallax source
   useEffect(() => {
-    if (isMobile) return;
+    if (isMobile) return
     const onMove = (e: PointerEvent) => {
-      progress.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
-      progress.pointer.y = -((e.clientY / window.innerHeight) * 2 - 1);
-    };
-    window.addEventListener('pointermove', onMove, { passive: true });
-    return () => window.removeEventListener('pointermove', onMove);
-  }, [isMobile]);
-
-  const modelScenes = SCENES.map((s, i) => ({ s, i })).filter(({ s }) => s.model);
+      progress.pointer.x = (e.clientX / window.innerWidth) * 2 - 1
+      progress.pointer.y = -((e.clientY / window.innerHeight) * 2 - 1)
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
+    return () => window.removeEventListener('pointermove', onMove)
+  }, [isMobile])
 
   return (
     <Canvas
@@ -79,9 +85,9 @@ export function Experience({ isMobile, isTablet, reducedMotion, onHeroReady }: E
     >
       <CameraRig isMobile={isMobile} reducedMotion={reducedMotion} />
       <Lighting lowPower={lowPower} />
-      {modelScenes.map(({ s, i }, order) => {
+      {MODEL_SCENES.map(({ s, i }, order) => {
         // Mount the next model only once the previous one is on screen.
-        if (order > loadedCount) return null;
+        if (order > loadedCount) return null
         return (
           <Suspense key={s.id} fallback={null}>
             <Craftsman
@@ -94,9 +100,9 @@ export function Experience({ isMobile, isTablet, reducedMotion, onHeroReady }: E
               onReady={handleModelReady}
             />
           </Suspense>
-        );
+        )
       })}
       <Preload all />
     </Canvas>
-  );
+  )
 }
